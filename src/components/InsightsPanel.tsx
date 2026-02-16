@@ -180,21 +180,21 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
   if (insights.length === 0) return null;
 
   return (
-    <div className="fixed top-16 right-4 z-30 w-[280px] max-h-[calc(100vh-100px)] overflow-y-auto">
+    <div className="fixed top-16 left-4 z-30 w-[300px] max-h-[calc(100vh-100px)] overflow-y-auto">
       <div className="bg-[var(--surface)]/90 backdrop-blur-sm rounded-xl border border-[var(--border)] shadow-xl">
         <div className="px-4 pt-3 pb-2">
-          <h3 className="text-xs font-medium text-[var(--muted)] uppercase tracking-widest">
+          <h3 className="text-base font-bold text-[var(--foreground)] tracking-wide">
             {locale === 'en' ? 'Insights' : '인사이트'}
           </h3>
         </div>
-        <div className="px-3 pb-3 space-y-1">
+        <div className="px-3 pb-3 space-y-1.5">
           {insights.map((insight, i) => (
             <div
               key={i}
-              className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--surface-hover)]/50 transition-colors"
+              className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[var(--surface-hover)]/50 transition-colors"
             >
-              <span className="text-sm shrink-0 mt-0.5">{insight.emoji}</span>
-              <p className="text-xs text-[var(--foreground)] leading-relaxed">
+              <span className="text-lg shrink-0 mt-0.5">{insight.emoji}</span>
+              <p className="text-[13px] text-[var(--foreground)] leading-relaxed">
                 {locale === 'en' ? insight.textEn : insight.textKo}
               </p>
             </div>

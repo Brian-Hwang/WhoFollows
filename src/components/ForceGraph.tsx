@@ -22,7 +22,7 @@ function linkNodeId(endpoint: string | GraphNode | { id: string }): string {
   return typeof endpoint === 'string' ? endpoint : endpoint.id;
 }
 
-const NODE_RADIUS = 18;
+const NODE_RADIUS = 24;
 
 export default function ForceGraph({
   graphData,
@@ -34,7 +34,7 @@ export default function ForceGraph({
   showNonFollows,
   showRelationships,
 }: ForceGraphProps) {
-  const { locale, t } = useI18n();
+  const { locale, t, theme } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -265,14 +265,18 @@ export default function ForceGraph({
         ctx.textBaseline = 'middle';
 
         const name = locale === 'en' ? n.nameEn : n.nameKo;
-        const labelIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
-        ctx.fillStyle = labelIsDark ? 'rgba(15, 23, 42, 0.7)' : 'rgba(248, 250, 252, 0.7)';
-        ctx.fillText(name, n.x + 0.5, n.y + r + labelSize + 2.5);
-        ctx.fillStyle = labelIsDark ? 'rgba(226, 232, 240, 0.9)' : 'rgba(30, 41, 59, 0.9)';
+        const isLight = theme === 'light';
+        // Outline pass — contrasting halo behind text
+        ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)';
+        for (const [ox, oy] of [[0.5, 0.5], [-0.5, 0.5], [0.5, -0.5], [-0.5, -0.5], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          ctx.fillText(name, n.x + ox, n.y + r + labelSize + 2 + oy);
+        }
+        // Text pass
+        ctx.fillStyle = isLight ? '#1e293b' : 'rgba(226, 232, 240, 0.95)';
         ctx.fillText(name, n.x, n.y + r + labelSize + 2);
       }
     },
-    [selectedNodeId, locale],
+    [selectedNodeId, locale, theme],
   );
 
   const paintLink = useCallback(
@@ -524,7 +528,7 @@ export default function ForceGraph({
           graphData={graphData}
           width={width}
           height={height}
-          backgroundColor="rgba(0,0,0,0)"
+          backgroundColor={theme === 'light' ? '#f1f5f9' : '#0f172a'}
           nodeCanvasObject={paintNode}
           nodeCanvasObjectMode={() => 'replace'}
           nodePointerAreaPaint={paintNodeArea}

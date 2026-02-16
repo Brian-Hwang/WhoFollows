@@ -17,7 +17,7 @@ export default function Home() {
   const [selectedShowId, setSelectedShowId] = useState('transit-love-4');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
-  const [showFollows, setShowFollows] = useState(false);
+  const [showFollows, setShowFollows] = useState(true);
   const [showNonFollows, setShowNonFollows] = useState(true);
   const [showRelationships, setShowRelationships] = useState(true);
 
