@@ -2,6 +2,7 @@
 
 import ShowSelector from './ShowSelector';
 import LanguageToggle from './LanguageToggle';
+import ThemeToggle from './ThemeToggle';
 import type { ShowInfo } from '@/data/shows';
 import { useI18n } from '@/lib/i18n';
 
@@ -26,6 +27,7 @@ export default function Header({ shows, selectedShowId, onShowSelect }: HeaderPr
           </p>
         </div>
         <div className="flex items-center gap-3 pointer-events-auto">
+          <ThemeToggle />
           <LanguageToggle />
           <ShowSelector
             shows={shows}

@@ -10,6 +10,7 @@ import ProfilePanel from '@/components/ProfilePanel';
 import Legend from '@/components/Legend';
 import Header from '@/components/Header';
 import FilterPanel from '@/components/FilterPanel';
+import InsightsPanel from '@/components/InsightsPanel';
 
 export default function Home() {
   const { locale, t } = useI18n();
@@ -103,6 +104,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <InsightsPanel showData={showData} />
 
       <ProfilePanel
         node={selectedNode}

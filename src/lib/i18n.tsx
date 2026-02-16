@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 
 export type Locale = 'ko' | 'en';
+export type Theme = 'dark' | 'light';
 
 const translations = {
   // Header
@@ -109,16 +110,24 @@ interface I18nContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: TranslationKey) => string;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 }
 
 const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('ko');
+  const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('whofollows-locale') as Locale;
-    if (saved === 'ko' || saved === 'en') setLocaleState(saved);
+    const savedLocale = localStorage.getItem('whofollows-locale') as Locale;
+    if (savedLocale === 'ko' || savedLocale === 'en') setLocaleState(savedLocale);
+    const savedTheme = localStorage.getItem('whofollows-theme') as Theme;
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      setThemeState(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
   }, []);
 
   const setLocale = useCallback((l: Locale) => {
@@ -126,12 +135,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('whofollows-locale', l);
   }, []);
 
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+    localStorage.setItem('whofollows-theme', t);
+    document.documentElement.setAttribute('data-theme', t);
+  }, []);
+
   const t = useCallback((key: TranslationKey) => {
     return translations[key]?.[locale] ?? key;
   }, [locale]);
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, theme, setTheme }}>
       {children}
     </I18nContext.Provider>
   );

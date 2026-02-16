@@ -265,9 +265,10 @@ export default function ForceGraph({
         ctx.textBaseline = 'middle';
 
         const name = locale === 'en' ? n.nameEn : n.nameKo;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+        const labelIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
+        ctx.fillStyle = labelIsDark ? 'rgba(15, 23, 42, 0.7)' : 'rgba(248, 250, 252, 0.7)';
         ctx.fillText(name, n.x + 0.5, n.y + r + labelSize + 2.5);
-        ctx.fillStyle = 'rgba(226, 232, 240, 0.9)';
+        ctx.fillStyle = labelIsDark ? 'rgba(226, 232, 240, 0.9)' : 'rgba(30, 41, 59, 0.9)';
         ctx.fillText(name, n.x, n.y + r + labelSize + 2);
       }
     },
@@ -306,7 +307,6 @@ export default function ForceGraph({
       const isNonFollow = l.type === 'non-follow';
       const gs = globalScale;
 
-      // Non-follow: dashed red line with ✗ marker at midpoint
       if (isNonFollow) {
         ctx.save();
         ctx.beginPath();
@@ -324,7 +324,10 @@ export default function ForceGraph({
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Draw ✗ at midpoint
+        const arrowLen = Math.max(8, 12 / gs);
+        const arrowWidth = Math.max(5, 7 / gs);
+        drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
+
         const markX = Math.abs(curvature) > 0.01 ? cpX : midX;
         const markY = Math.abs(curvature) > 0.01 ? cpY : midY;
         const markSize = Math.max(4, 6 / gs);
@@ -415,16 +418,11 @@ export default function ForceGraph({
         if (dist === 0) return;
 
         if (isOneWayFollow) {
-          const arrowLen = Math.max(14, 22 / gs);
-          const arrowWidth = Math.max(9, 12 / gs);
-
-          const glowAlpha2 = 0.3 + 0.2 * Math.sin(glowPhaseRef.current * Math.PI * 2);
-          ctx.save();
-          ctx.globalAlpha = glowAlpha2;
-          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen + 6, arrowWidth + 4, '#ffffff', NODE_RADIUS);
-          ctx.restore();
+          const arrowLen = Math.max(8, 12 / gs);
+          const arrowWidth = Math.max(5, 7 / gs);
 
           ctx.save();
+          ctx.globalAlpha = 0.5;
           drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen + 2, arrowWidth + 1.5, '#ffffff', NODE_RADIUS);
           ctx.restore();
           drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
@@ -450,7 +448,8 @@ export default function ForceGraph({
 
         const metrics = ctx.measureText(l.label);
         const pad = 2 / globalScale;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        const themeIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
+        ctx.fillStyle = themeIsDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(248, 250, 252, 0.9)';
         ctx.fillRect(
           labelX - metrics.width / 2 - pad,
           labelY - labelSize / 2 - pad,
