@@ -10,6 +10,7 @@ export interface CastMember {
   gender: 'M' | 'F';
   color: string;           // hex color for node
   initial: string;         // Korean initial for node display (first char of nameKo)
+  profileImage?: string;   // path to profile image in /public, e.g., "/profiles/seong-baekhyun.jpg"
 }
 
 export interface Relationship {
@@ -49,6 +50,7 @@ export interface GraphNode {
   color: string;
   initial: string;
   val: number;             // node size
+  profileImage?: string;
 }
 
 export interface GraphLink {

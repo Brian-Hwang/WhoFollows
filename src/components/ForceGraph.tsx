@@ -10,7 +10,7 @@ interface ForceGraphProps {
   selectedNodeId: string | null;
 }
 
-const NODE_RADIUS = 14;
+const NODE_RADIUS = 18;
 
 export default function ForceGraph({
   graphData,
@@ -25,11 +25,26 @@ export default function ForceGraph({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ForceGraph2DComp, setForceGraph2DComp] = useState<any>(null);
 
+    // Preload profile images into an off-screen cache for canvas rendering
+  const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
+
   useEffect(() => {
     import('react-force-graph-2d').then((mod) => {
       setForceGraph2DComp(() => mod.default);
     });
   }, []);
+
+  // Preload all profile images when graph data changes
+  useEffect(() => {
+    graphData.nodes.forEach((node) => {
+      if (node.profileImage && !imageCache.current.has(node.id)) {
+        const img = new Image();
+        img.src = node.profileImage;
+        // Store immediately so we have a reference; onload will make it drawable
+        imageCache.current.set(node.id, img);
+      }
+    });
+  }, [graphData]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -47,52 +62,70 @@ export default function ForceGraph({
     const fg = fgRef.current;
     if (!fg) return;
     fg.d3Force('charge')?.strength(-400);
-    fg.d3Force('link')?.distance(140);
+    fg.d3Force('link')?.distance(160);
     fg.d3ReheatSimulation();
   }, [graphData, ForceGraph2DComp]);
 
-  // Custom node rendering
+  // Custom node rendering — profile image clipped to circle, with colored border
   const paintNode = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const n = node as GraphNode & { x: number; y: number };
       const r = NODE_RADIUS;
-      const fontSize = Math.max(10, 12 / globalScale * globalScale); // ~12px
 
       // Selected glow ring
       if (n.id === selectedNodeId) {
         ctx.beginPath();
-        ctx.arc(n.x, n.y, r + 4, 0, 2 * Math.PI);
-        ctx.fillStyle = `${n.color}33`; // 20% opacity
+        ctx.arc(n.x, n.y, r + 5, 0, 2 * Math.PI);
+        ctx.fillStyle = `${n.color}33`;
         ctx.fill();
         ctx.strokeStyle = n.color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
       }
 
-      // Main circle
+      // Colored border ring (always visible)
       ctx.beginPath();
-      ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
-      ctx.fillStyle = n.color;
-      ctx.fill();
-
-      // Subtle border
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = 1;
+      ctx.arc(n.x, n.y, r + 1.5, 0, 2 * Math.PI);
+      ctx.strokeStyle = n.color;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Initial text
-      ctx.font = `500 ${fontSize}px "Noto Sans KR", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(n.initial, n.x, n.y);
+      // Try to draw profile image clipped to circle
+      const img = imageCache.current.get(n.id);
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
+        ctx.clip();
+        ctx.drawImage(img, n.x - r, n.y - r, r * 2, r * 2);
+        ctx.restore();
+      } else {
+        // Fallback: colored circle with initial
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
+        ctx.fillStyle = n.color;
+        ctx.fill();
+
+        const fontSize = 12;
+        ctx.font = `500 ${fontSize}px "Noto Sans KR", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(n.initial, n.x, n.y);
+      }
 
       // Name label below node (only at reasonable zoom)
       if (globalScale > 0.6) {
-        const labelSize = Math.max(8, 9);
-        ctx.font = `400 ${labelSize}px "Noto Sans KR", sans-serif`;
-        ctx.fillStyle = 'rgba(226, 232, 240, 0.8)';
+        const labelSize = 9;
+        ctx.font = `500 ${labelSize}px "Noto Sans KR", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Text shadow for readability on dark background
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+        ctx.fillText(n.nameKo, n.x + 0.5, n.y + r + labelSize + 2.5);
+        ctx.fillStyle = 'rgba(226, 232, 240, 0.9)';
         ctx.fillText(n.nameKo, n.x, n.y + r + labelSize + 2);
       }
     },

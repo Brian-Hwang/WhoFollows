@@ -1,4 +1,13 @@
-export default function Header({ showName }: { showName: string }) {
+import ShowSelector from './ShowSelector';
+import type { ShowInfo } from '@/data/shows';
+
+interface HeaderProps {
+  shows: ShowInfo[];
+  selectedShowId: string;
+  onShowSelect: (id: string) => void;
+}
+
+export default function Header({ shows, selectedShowId, onShowSelect }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
       <div className="flex items-center justify-between px-6 py-4">
@@ -10,11 +19,11 @@ export default function Header({ showName }: { showName: string }) {
             누가 누구를 팔로우할까?
           </p>
         </div>
-        <div className="pointer-events-auto">
-          <span className="text-sm px-3 py-1.5 rounded-full bg-[var(--surface)]/80 backdrop-blur-sm border border-[var(--border)] text-[var(--foreground)]">
-            {showName}
-          </span>
-        </div>
+        <ShowSelector
+          shows={shows}
+          selectedId={selectedShowId}
+          onSelect={onShowSelect}
+        />
       </div>
     </header>
   );

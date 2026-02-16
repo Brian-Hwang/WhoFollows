@@ -11,6 +11,7 @@ export const cast: CastMember[] = [
     gender: 'M',
     color: '#3b82f6',
     initial: '성',
+    profileImage: '/profiles/seong-baekhyun.jpg',
   },
   {
     id: 'choi-yunnyeong',
@@ -22,6 +23,7 @@ export const cast: CastMember[] = [
     gender: 'F',
     color: '#ec4899',
     initial: '최',
+    profileImage: '/profiles/choi-yunnyeong.jpg',
   },
   {
     id: 'kim-woojin',
@@ -33,6 +35,7 @@ export const cast: CastMember[] = [
     gender: 'M',
     color: '#6366f1',
     initial: '김',
+    profileImage: '/profiles/kim-woojin.jpg',
   },
   {
     id: 'hong-jiyeon',
@@ -44,6 +47,7 @@ export const cast: CastMember[] = [
     gender: 'F',
     color: '#f472b6',
     initial: '홍',
+    profileImage: '/profiles/hong-jiyeon.jpg',
   },
   {
     id: 'kwak-minkyung',
@@ -55,6 +59,7 @@ export const cast: CastMember[] = [
     gender: 'F',
     color: '#f43f5e',
     initial: '곽',
+    profileImage: '/profiles/kwak-minkyung.jpg',
   },
   {
     id: 'jung-wongyu',
@@ -66,6 +71,7 @@ export const cast: CastMember[] = [
     gender: 'M',
     color: '#8b5cf6',
     initial: '정',
+    profileImage: '/profiles/jung-wongyu.jpg',
   },
   {
     id: 'park-jihyun',
@@ -77,6 +83,7 @@ export const cast: CastMember[] = [
     gender: 'F',
     color: '#a855f7',
     initial: '박',
+    profileImage: '/profiles/park-jihyun.jpg',
   },
   {
     id: 'jo-yusik',
@@ -88,6 +95,7 @@ export const cast: CastMember[] = [
     gender: 'M',
     color: '#14b8a6',
     initial: '조',
+    profileImage: '/profiles/jo-yusik.jpg',
   },
   {
     id: 'park-hyunji',
@@ -99,6 +107,7 @@ export const cast: CastMember[] = [
     gender: 'F',
     color: '#f97316',
     initial: '현',
+    profileImage: '/profiles/park-hyunji.jpg',
   },
   {
     id: 'lee-jaehyeong',
@@ -110,6 +119,7 @@ export const cast: CastMember[] = [
     gender: 'M',
     color: '#22c55e',
     initial: '이',
+    profileImage: '/profiles/lee-jaehyeong.jpg',
   },
   {
     id: 'shin-seungyong',
@@ -121,5 +131,6 @@ export const cast: CastMember[] = [
     gender: 'M',
     color: '#eab308',
     initial: '신',
+    profileImage: '/profiles/shin-seungyong.jpg',
   },
 ];

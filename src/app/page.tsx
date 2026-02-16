@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { transitLove4 } from '@/data/transit-love-4';
+import { useState, useMemo, useCallback } from 'react';
+import { shows, getShowData } from '@/data/shows';
 import { buildGraphData } from '@/lib/graph-utils';
 import type { GraphNode } from '@/lib/types';
 import ForceGraph from '@/components/ForceGraph';
@@ -10,16 +10,30 @@ import Legend from '@/components/Legend';
 import Header from '@/components/Header';
 
 export default function Home() {
+  const [selectedShowId, setSelectedShowId] = useState('transit-love-4');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
+  const showData = useMemo(() => getShowData(selectedShowId), [selectedShowId]);
+
   const graphData = useMemo(
-    () => buildGraphData(transitLove4),
-    [],
+    () => (showData ? buildGraphData(showData) : { nodes: [], links: [] }),
+    [showData],
   );
+
+  const handleShowSelect = useCallback((id: string) => {
+    setSelectedShowId(id);
+    setSelectedNode(null);
+  }, []);
+
+  if (!showData) return null;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[var(--background)]">
-      <Header showName={transitLove4.nameKo} />
+      <Header
+        shows={shows}
+        selectedShowId={selectedShowId}
+        onShowSelect={handleShowSelect}
+      />
 
       <div className="absolute inset-0">
         <ForceGraph
@@ -34,9 +48,9 @@ export default function Home() {
 
       <ProfilePanel
         node={selectedNode}
-        relationships={transitLove4.relationships}
-        follows={transitLove4.follows}
-        cast={transitLove4.cast}
+        relationships={showData.relationships}
+        follows={showData.follows}
+        cast={showData.cast}
         onClose={() => setSelectedNode(null)}
       />
     </div>
