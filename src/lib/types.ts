@@ -4,6 +4,7 @@ export interface CastMember {
   id: string;              // kebab-case, e.g., "seong-baekhyun"
   nameKo: string;          // Korean name: 성백현
   nameEn: string;          // English: Seong Baek-hyun
+  nameZh?: string;         // Chinese: 成白贤
   instagram: string;       // handle without @: baekhyun_s
   occupation: string;      // in Korean
   age: number;
@@ -29,6 +30,7 @@ export interface ShowData {
   id: string;
   nameKo: string;
   nameEn: string;
+  nameZh?: string;
   network: string;
   episodes: number;
   airDateStart: string;
@@ -44,6 +46,7 @@ export interface GraphNode {
   id: string;
   nameKo: string;
   nameEn: string;
+  nameZh?: string;
   instagram: string;
   occupation: string;
   age: number;

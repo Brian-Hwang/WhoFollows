@@ -6,6 +6,7 @@ import type { Locale } from '@/lib/i18n';
 const LOCALES: { value: Locale; label: string }[] = [
   { value: 'ko', label: 'KO' },
   { value: 'en', label: 'EN' },
+  { value: 'zh', label: '中' },
 ];
 
 export default function LanguageToggle() {

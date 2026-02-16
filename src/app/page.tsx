@@ -57,9 +57,11 @@ export default function Home() {
   if (!showData) return null;
 
   const verifiedDate = showData.lastVerified
-    ? locale === 'en'
-      ? new Date(showData.lastVerified).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-      : new Date(showData.lastVerified).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? locale === 'zh'
+      ? new Date(showData.lastVerified).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+      : locale === 'en'
+        ? new Date(showData.lastVerified).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        : new Date(showData.lastVerified).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
     : null;
 
   return (

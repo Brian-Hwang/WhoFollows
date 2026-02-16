@@ -264,7 +264,7 @@ export default function ForceGraph({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        const name = locale === 'en' ? n.nameEn : n.nameKo;
+        const name = locale === 'zh' ? (n.nameZh ?? n.nameEn) : locale === 'en' ? n.nameEn : n.nameKo;
         const isLight = theme === 'light';
         // Outline pass — contrasting halo behind text
         ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)';
@@ -559,15 +559,12 @@ export default function ForceGraph({
           }}
         >
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 shadow-xl max-w-[200px]">
-            <p className="text-sm font-medium text-[var(--foreground)]">
-              {locale === 'en' ? hoveredNode.nameEn : hoveredNode.nameKo}
+             <p className="text-sm font-medium text-[var(--foreground)]">
+              {locale === 'zh' ? (hoveredNode.nameZh ?? hoveredNode.nameEn) : locale === 'en' ? hoveredNode.nameEn : hoveredNode.nameKo}
             </p>
-            {hoveredNode.nameEn && locale !== 'en' && (
-              <p className="text-xs text-[var(--muted)]">{hoveredNode.nameEn}</p>
-            )}
-            {hoveredNode.nameKo && locale === 'en' && (
-              <p className="text-xs text-[var(--muted)]">{hoveredNode.nameKo}</p>
-            )}
+            <p className="text-xs text-[var(--muted)]">
+              {locale === 'ko' ? hoveredNode.nameEn : hoveredNode.nameKo}
+            </p>
             <div className="flex gap-3 mt-1 text-[10px] text-[var(--muted)]">
               <span>{t('tooltip.following')} {hoveredNode.followingCount ?? 0}</span>
               <span>{t('tooltip.followers')} {hoveredNode.followersCount ?? 0}</span>

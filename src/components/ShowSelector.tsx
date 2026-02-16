@@ -16,7 +16,7 @@ export default function ShowSelector({ shows, selectedId, onSelect }: ShowSelect
   const { locale, t } = useI18n();
 
   const current = shows.find((s) => s.id === selectedId) ?? shows[0];
-  const showName = (show: ShowInfo) => locale === 'en' ? show.nameEn : show.nameKo;
+  const showName = (show: ShowInfo) => locale === 'zh' ? (show.nameZh ?? show.nameEn) : locale === 'en' ? show.nameEn : show.nameKo;
 
   const handleClickOutside = useCallback((e: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(e.target as Node)) {

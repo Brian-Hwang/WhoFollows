@@ -40,7 +40,7 @@ export default function ProfilePanel({
 
   function getName(member: CastMember | undefined, fallback: string): string {
     if (!member) return fallback;
-    return locale === 'en' ? member.nameEn : member.nameKo;
+    return locale === 'zh' ? (member.nameZh ?? member.nameEn) : locale === 'en' ? member.nameEn : member.nameKo;
   }
 
   function getPartnerName(rel: Relationship, currentId: string): string {
@@ -84,9 +84,9 @@ export default function ProfilePanel({
               )}
             </div>
             <h2 className="text-xl font-bold text-[var(--foreground)]">
-              {locale === 'en' ? node.nameEn : node.nameKo}
+              {locale === 'zh' ? (node.nameZh ?? node.nameEn) : locale === 'en' ? node.nameEn : node.nameKo}
             </h2>
-            <p className="text-sm text-[var(--muted)]">{locale === 'en' ? node.nameKo : node.nameEn}</p>
+            <p className="text-sm text-[var(--muted)]">{locale === 'zh' ? node.nameKo : locale === 'en' ? node.nameKo : node.nameEn}</p>
             <a
               href={`https://instagram.com/${node.instagram}`}
               target="_blank"
