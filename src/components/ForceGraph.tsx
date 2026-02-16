@@ -2,12 +2,24 @@
 
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import type { GraphData, GraphNode, GraphLink } from '@/lib/types';
+import { computeFocusPositions, CIRCLE_RADIUS } from '@/lib/graph-utils';
+import { useI18n } from '@/lib/i18n';
 
 interface ForceGraphProps {
   graphData: GraphData;
   onNodeClick: (node: GraphNode) => void;
   onBackgroundClick: () => void;
   selectedNodeId: string | null;
+  focusedNodeId: string | null;
+  showFollows: boolean;
+  showNonFollows: boolean;
+  showRelationships: boolean;
+}
+
+// Extract node id from a link endpoint (handles both string ids and
+// resolved node-object refs that react-force-graph-2d substitutes at runtime).
+function linkNodeId(endpoint: string | GraphNode | { id: string }): string {
+  return typeof endpoint === 'string' ? endpoint : endpoint.id;
 }
 
 const NODE_RADIUS = 18;
@@ -17,7 +29,12 @@ export default function ForceGraph({
   onNodeClick,
   onBackgroundClick,
   selectedNodeId,
+  focusedNodeId,
+  showFollows,
+  showNonFollows,
+  showRelationships,
 }: ForceGraphProps) {
+  const { locale, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,8 +42,12 @@ export default function ForceGraph({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ForceGraph2DComp, setForceGraph2DComp] = useState<any>(null);
 
-    // Preload profile images into an off-screen cache for canvas rendering
+  // Preload profile images into an off-screen cache for canvas rendering
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
+
+  const [hoveredNode, setHoveredNode] = useState<(GraphNode & { x: number; y: number }) | null>(null);
+  const [hoveredLink, setHoveredLink] = useState<(GraphLink & { source: { x: number; y: number }; target: { x: number; y: number } }) | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     import('react-force-graph-2d').then((mod) => {
@@ -40,7 +61,6 @@ export default function ForceGraph({
       if (node.profileImage && !imageCache.current.has(node.id)) {
         const img = new Image();
         img.src = node.profileImage;
-        // Store immediately so we have a reference; onload will make it drawable
         imageCache.current.set(node.id, img);
       }
     });
@@ -58,22 +78,148 @@ export default function ForceGraph({
     return () => observer.disconnect();
   }, []);
 
+  // Cache the original circular positions from buildGraphData on first load / show change.
+  // We snapshot these ONCE per graphData identity so focus-mode mutations can't corrupt them.
+  const defaultPositions = useRef<Map<string, { fx: number; fy: number }>>(new Map());
+  const lastGraphDataRef = useRef<GraphData | null>(null);
+
+  if (graphData !== lastGraphDataRef.current) {
+    lastGraphDataRef.current = graphData;
+    const map = new Map<string, { fx: number; fy: number }>();
+    for (const node of graphData.nodes) {
+      if (node.fx != null && node.fy != null) {
+        map.set(node.id, { fx: node.fx, fy: node.fy });
+      }
+    }
+    defaultPositions.current = map;
+  }
+
+  // Build a set of visible link KEYS for paintLink to skip hidden links.
+  // We pass ALL links to react-force-graph-2d (so it maintains internal
+  // node-object bindings) and hide non-visible ones in the paint callback.
+  // Keys use "srcId|tgtId|type" because indexOf fails after the library
+  // mutates link objects (replacing string IDs with node-object refs).
+  const visibleLinkSet = useMemo(() => {
+    const set = new Set<string>();
+    graphData.links.forEach((link) => {
+      const isFollow = link.type === 'follow' || link.type === 'mutual-follow';
+      const isNonFollow = link.type === 'non-follow';
+      const isRelationship = !isFollow && !isNonFollow;
+      if (isFollow && !showFollows) return;
+      if (isNonFollow && !showNonFollows) return;
+      if (isRelationship && !showRelationships) return;
+      const srcId = linkNodeId(link.source as string | { id: string });
+      const tgtId = linkNodeId(link.target as string | { id: string });
+      if (focusedNodeId && srcId !== focusedNodeId && tgtId !== focusedNodeId) return;
+      set.add(`${srcId}|${tgtId}|${link.type}`);
+    });
+    return set;
+  }, [graphData.links, showFollows, showNonFollows, showRelationships, focusedNodeId]);
+
+  // Animate nodes toward target positions using requestAnimationFrame LERP.
+  // We keep fx/fy pinned to the CURRENT animated position each frame so
+  // react-force-graph-2d renders them where we want.
+  const animTargets = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const animFrameRef = useRef<number>(0);
+
   useEffect(() => {
     const fg = fgRef.current;
     if (!fg) return;
-    fg.d3Force('charge')?.strength(-400);
-    fg.d3Force('link')?.distance(160);
-    fg.d3ReheatSimulation();
+
+    const targets: Map<string, { fx: number; fy: number }> = focusedNodeId
+      ? computeFocusPositions(graphData.nodes, focusedNodeId, CIRCLE_RADIUS)
+      : defaultPositions.current;
+
+    const newTargets = new Map<string, { x: number; y: number }>();
+    for (const [id, pos] of targets) {
+      newTargets.set(id, { x: pos.fx, y: pos.fy });
+    }
+    animTargets.current = newTargets;
+
+    cancelAnimationFrame(animFrameRef.current);
+
+    const LERP_SPEED = 0.1;
+    const THRESHOLD = 0.5;
+
+    const step = () => {
+      let anyMoving = false;
+      for (const node of graphData.nodes) {
+        const target = animTargets.current.get(node.id);
+        if (!target) continue;
+
+        const nx = (node as any).x ?? node.fx ?? 0;
+        const ny = (node as any).y ?? node.fy ?? 0;
+        const dx = target.x - nx;
+        const dy = target.y - ny;
+
+        if (Math.abs(dx) > THRESHOLD || Math.abs(dy) > THRESHOLD) {
+          anyMoving = true;
+          const newX = nx + dx * LERP_SPEED;
+          const newY = ny + dy * LERP_SPEED;
+          node.fx = newX;
+          node.fy = newY;
+          (node as any).x = newX;
+          (node as any).y = newY;
+        } else {
+          node.fx = target.x;
+          node.fy = target.y;
+          (node as any).x = target.x;
+          (node as any).y = target.y;
+        }
+        (node as any).vx = 0;
+        (node as any).vy = 0;
+      }
+
+      fg.d3ReheatSimulation?.();
+
+      if (anyMoving) {
+        animFrameRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    animFrameRef.current = requestAnimationFrame(step);
+
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [focusedNodeId, graphData]);
+
+  // Disable force simulation — nodes are pinned via fx/fy
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (!fg) return;
+    fg.d3Force('charge')?.strength(0);
+    fg.d3Force('link')?.distance(0);
+    fg.d3Force('center', null);
   }, [graphData, ForceGraph2DComp]);
 
-  // Custom node rendering — profile image clipped to circle, with colored border
+  // Track mouse position for tooltips
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      setTooltipPos({ x: e.clientX, y: e.clientY });
+    };
+    el.addEventListener('mousemove', handleMouseMove);
+    return () => el.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Animation phase for one-way follow glow
+  const glowPhaseRef = useRef(0);
+  useEffect(() => {
+    let animId: number;
+    const animate = () => {
+      glowPhaseRef.current = (Date.now() % 2000) / 2000;
+      animId = requestAnimationFrame(animate);
+    };
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
   const paintNode = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const n = node as GraphNode & { x: number; y: number };
       const r = NODE_RADIUS;
 
-      // Selected glow ring
       if (n.id === selectedNodeId) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, r + 5, 0, 2 * Math.PI);
@@ -84,14 +230,12 @@ export default function ForceGraph({
         ctx.stroke();
       }
 
-      // Colored border ring (always visible)
       ctx.beginPath();
       ctx.arc(n.x, n.y, r + 1.5, 0, 2 * Math.PI);
       ctx.strokeStyle = n.color;
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Try to draw profile image clipped to circle
       const img = imageCache.current.get(n.id);
       if (img && img.complete && img.naturalWidth > 0) {
         ctx.save();
@@ -101,7 +245,6 @@ export default function ForceGraph({
         ctx.drawImage(img, n.x - r, n.y - r, r * 2, r * 2);
         ctx.restore();
       } else {
-        // Fallback: colored circle with initial
         ctx.beginPath();
         ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
         ctx.fillStyle = n.color;
@@ -115,56 +258,143 @@ export default function ForceGraph({
         ctx.fillText(n.initial, n.x, n.y);
       }
 
-      // Name label below node (only at reasonable zoom)
       if (globalScale > 0.6) {
         const labelSize = 9;
         ctx.font = `500 ${labelSize}px "Noto Sans KR", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Text shadow for readability on dark background
+        const name = locale === 'en' ? n.nameEn : n.nameKo;
         ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-        ctx.fillText(n.nameKo, n.x + 0.5, n.y + r + labelSize + 2.5);
+        ctx.fillText(name, n.x + 0.5, n.y + r + labelSize + 2.5);
         ctx.fillStyle = 'rgba(226, 232, 240, 0.9)';
-        ctx.fillText(n.nameKo, n.x, n.y + r + labelSize + 2);
+        ctx.fillText(name, n.x, n.y + r + labelSize + 2);
       }
     },
-    [selectedNodeId],
+    [selectedNodeId, locale],
   );
 
-  // Custom link rendering
   const paintLink = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const l = link as GraphLink & {
         source: GraphNode & { x: number; y: number };
         target: GraphNode & { x: number; y: number };
+        __indexColor?: string;
       };
 
-      if (!l.source?.x || !l.target?.x) return;
+      if (l.source?.x == null || l.target?.x == null) return;
+
+      const srcId = linkNodeId(l.source as unknown as string | { id: string });
+      const tgtId = linkNodeId(l.target as unknown as string | { id: string });
+      if (!visibleLinkSet.has(`${srcId}|${tgtId}|${l.type}`)) return;
 
       const sx = l.source.x;
       const sy = l.source.y;
       const tx = l.target.x;
       const ty = l.target.y;
 
-      // Calculate curvature offset
       const curvature = l.curvature || 0;
       const dx = tx - sx;
       const dy = ty - sy;
       const midX = (sx + tx) / 2;
       const midY = (sy + ty) / 2;
-
-      // Control point for quadratic bezier (perpendicular offset)
       const cpX = midX - dy * curvature;
       const cpY = midY + dx * curvature;
 
+      const isOneWayFollow = l.type === 'follow';
+      const isNonFollow = l.type === 'non-follow';
+      const gs = globalScale;
+
+      // Non-follow: dashed red line with ✗ marker at midpoint
+      if (isNonFollow) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = l.color;
+        ctx.lineWidth = l.width / gs;
+        ctx.setLineDash([6 / gs, 4 / gs]);
+        ctx.globalAlpha = 0.7;
+        if (Math.abs(curvature) > 0.01) {
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(cpX, cpY, tx, ty);
+        } else {
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(tx, ty);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw ✗ at midpoint
+        const markX = Math.abs(curvature) > 0.01 ? cpX : midX;
+        const markY = Math.abs(curvature) > 0.01 ? cpY : midY;
+        const markSize = Math.max(4, 6 / gs);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = Math.max(1.5, 2 / gs);
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(markX - markSize, markY - markSize);
+        ctx.lineTo(markX + markSize, markY + markSize);
+        ctx.moveTo(markX + markSize, markY - markSize);
+        ctx.lineTo(markX - markSize, markY + markSize);
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+
+      if (isOneWayFollow) {
+        const phase = glowPhaseRef.current;
+        const dashLen = 8 / gs;
+        const gapLen = 12 / gs;
+        const dashOffset = phase * (dashLen + gapLen) * 8;
+
+        const glowAlpha = 0.12 + 0.18 * Math.sin(phase * Math.PI * 2);
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255, 107, 53, ${glowAlpha})`;
+        ctx.lineWidth = (l.width * 4) / gs;
+        ctx.setLineDash([]);
+        if (Math.abs(curvature) > 0.01) {
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(cpX, cpY, tx, ty);
+        } else {
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(tx, ty);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 200, 150, 0.6)';
+        ctx.lineWidth = (l.width * 0.8) / gs;
+        ctx.setLineDash([dashLen, gapLen]);
+        ctx.lineDashOffset = -dashOffset;
+        if (Math.abs(curvature) > 0.01) {
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(cpX, cpY, tx, ty);
+        } else {
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(tx, ty);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      const isMutualFollow = l.type === 'mutual-follow';
+
+      ctx.save();
       ctx.beginPath();
       ctx.strokeStyle = l.color;
-      ctx.lineWidth = l.width / globalScale;
+
+      if (isMutualFollow) {
+        ctx.lineWidth = 0.5 / gs;
+        ctx.globalAlpha = 0.08;
+      } else {
+        ctx.lineWidth = (isOneWayFollow ? l.width * 1.5 : l.width) / gs;
+      }
 
       if (l.dashed) {
-        ctx.setLineDash([5 / globalScale, 5 / globalScale]);
+        ctx.setLineDash([5 / gs, 5 / gs]);
       } else {
         ctx.setLineDash([]);
       }
@@ -178,28 +408,37 @@ export default function ForceGraph({
       }
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.restore();
 
-      // Draw arrowheads for follow links
-      if (l.type === 'follow' || l.type === 'mutual-follow') {
-        const arrowLen = 6 / globalScale;
-        const arrowWidth = 3 / globalScale;
-
-        // Calculate point near target (offset by node radius)
+      if (l.type === 'follow' || isMutualFollow) {
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist === 0) return;
 
-        if (l.type === 'follow' || l.type === 'mutual-follow') {
-          // Arrow at target
-          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
-        }
+        if (isOneWayFollow) {
+          const arrowLen = Math.max(14, 22 / gs);
+          const arrowWidth = Math.max(9, 12 / gs);
 
-        if (l.type === 'mutual-follow') {
-          // Arrow at source (reverse direction)
+          const glowAlpha2 = 0.3 + 0.2 * Math.sin(glowPhaseRef.current * Math.PI * 2);
+          ctx.save();
+          ctx.globalAlpha = glowAlpha2;
+          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen + 6, arrowWidth + 4, '#ffffff', NODE_RADIUS);
+          ctx.restore();
+
+          ctx.save();
+          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen + 2, arrowWidth + 1.5, '#ffffff', NODE_RADIUS);
+          ctx.restore();
+          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
+        } else if (isMutualFollow) {
+          ctx.save();
+          ctx.globalAlpha = 0.08;
+          const arrowLen = 6 / gs;
+          const arrowWidth = 3 / gs;
+          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
           drawArrow(ctx, tx, ty, sx, sy, cpX, cpY, -curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
+          ctx.restore();
         }
       }
 
-      // Draw label for relationship links
       if (l.label && globalScale > 0.8) {
         const labelX = Math.abs(curvature) > 0.01 ? cpX : midX;
         const labelY = Math.abs(curvature) > 0.01 ? cpY : midY;
@@ -209,7 +448,6 @@ export default function ForceGraph({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Background for label
         const metrics = ctx.measureText(l.label);
         const pad = 2 / globalScale;
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
@@ -224,7 +462,7 @@ export default function ForceGraph({
         ctx.fillText(l.label, labelX, labelY);
       }
     },
-    [],
+    [graphData.links, visibleLinkSet],
   );
 
   // Node pointer area for click detection
@@ -240,22 +478,51 @@ export default function ForceGraph({
     [],
   );
 
-  const data = useMemo(() => graphData, [graphData]);
-
   const { width, height } = dimensions;
   const isReady = ForceGraph2DComp && width > 0 && height > 0;
+
+  const handleNodeHover = useCallback((node: unknown) => {
+    if (node) {
+      setHoveredNode(node as GraphNode & { x: number; y: number });
+      setHoveredLink(null);
+    } else {
+      setHoveredNode(null);
+    }
+  }, []);
+
+  const handleLinkHover = useCallback((link: unknown) => {
+    if (link) {
+      setHoveredLink(link as GraphLink & { source: { x: number; y: number }; target: { x: number; y: number } });
+      setHoveredNode(null);
+    } else {
+      setHoveredLink(null);
+    }
+  }, []);
+
+  const linkTypeLabel = (type: string, label?: string): string => {
+    switch (type) {
+      case 'mutual-follow': return t('legend.mutualFollow');
+      case 'follow': return t('legend.oneWayFollow');
+      case 'ex-couple': return t('rel.exCouple');
+      case 'confirmed-couple': return t('rel.confirmedCouple');
+      case 'final-couple': return t('rel.finalCouple');
+      case 'not-together': return t('rel.notTogether');
+      case 'non-follow': return t('legend.nonFollow');
+      default: return label || type;
+    }
+  };
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-[var(--muted)] text-sm">그래프 로딩 중...</div>
+          <div className="text-[var(--muted)] text-sm">{t('loading.graph')}</div>
         </div>
       )}
       {isReady && (
         <ForceGraph2DComp
           ref={fgRef}
-          graphData={data}
+          graphData={graphData}
           width={width}
           height={height}
           backgroundColor="rgba(0,0,0,0)"
@@ -266,10 +533,64 @@ export default function ForceGraph({
           linkCanvasObjectMode={() => 'replace'}
           onNodeClick={(node: unknown) => onNodeClick(node as GraphNode)}
           onBackgroundClick={onBackgroundClick}
-          cooldownTicks={100}
+          onNodeHover={handleNodeHover}
+          onLinkHover={handleLinkHover}
+          cooldownTicks={0}
           enableNodeDrag={true}
+          enableZoomInteraction={true}
+          enablePanInteraction={true}
+          onNodeDblClick={() => {}}
           linkCurvature={(link: unknown) => (link as GraphLink).curvature || 0}
         />
+      )}
+
+      {hoveredNode && (
+        <div
+          className="pointer-events-none"
+          style={{
+            position: 'fixed',
+            left: tooltipPos.x + 14,
+            top: tooltipPos.y - 14,
+            transform: 'translateY(-100%)',
+            zIndex: 50,
+          }}
+        >
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 shadow-xl max-w-[200px]">
+            <p className="text-sm font-medium text-[var(--foreground)]">
+              {locale === 'en' ? hoveredNode.nameEn : hoveredNode.nameKo}
+            </p>
+            {hoveredNode.nameEn && locale !== 'en' && (
+              <p className="text-xs text-[var(--muted)]">{hoveredNode.nameEn}</p>
+            )}
+            {hoveredNode.nameKo && locale === 'en' && (
+              <p className="text-xs text-[var(--muted)]">{hoveredNode.nameKo}</p>
+            )}
+            <div className="flex gap-3 mt-1 text-[10px] text-[var(--muted)]">
+              <span>{t('tooltip.following')} {hoveredNode.followingCount ?? 0}</span>
+              <span>{t('tooltip.followers')} {hoveredNode.followersCount ?? 0}</span>
+            </div>
+            <p className="text-[10px] text-[var(--muted)] mt-1 opacity-60">{t('tooltip.clickForDetails')}</p>
+          </div>
+        </div>
+      )}
+
+      {hoveredLink && (
+        <div
+          className="pointer-events-none"
+          style={{
+            position: 'fixed',
+            left: tooltipPos.x + 14,
+            top: tooltipPos.y - 14,
+            transform: 'translateY(-100%)',
+            zIndex: 50,
+          }}
+        >
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 shadow-xl">
+            <p className="text-xs font-medium" style={{ color: hoveredLink.color }}>
+              {linkTypeLabel(hoveredLink.type, hoveredLink.label)}
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

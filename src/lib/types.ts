@@ -36,6 +36,7 @@ export interface ShowData {
   cast: CastMember[];
   relationships: Relationship[];
   follows: Follow[];
+  lastVerified?: string;
 }
 
 // ForceGraph types
@@ -51,12 +52,16 @@ export interface GraphNode {
   initial: string;
   val: number;             // node size
   profileImage?: string;
+  fx?: number;             // pinned x position for circular layout
+  fy?: number;             // pinned y position for circular layout
+  followingCount?: number; // number of people this node follows
+  followersCount?: number; // number of people following this node
 }
 
 export interface GraphLink {
   source: string;
   target: string;
-  type: 'follow' | 'mutual-follow' | 'ex-couple' | 'final-couple' | 'confirmed-couple' | 'not-together';
+  type: 'follow' | 'mutual-follow' | 'non-follow' | 'ex-couple' | 'final-couple' | 'confirmed-couple' | 'not-together';
   color: string;
   width: number;
   dashed: boolean;

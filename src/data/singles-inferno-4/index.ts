@@ -3,14 +3,14 @@ import { cast } from './cast';
 import { relationships } from './relationships';
 import { follows } from './follows';
 
-export const transitLove4: ShowData = {
-  id: 'transit-love-4',
-  nameKo: '환승연애4',
-  nameEn: 'Transit Love 4',
-  network: 'TVING',
-  episodes: 21,
-  airDateStart: '2025-10-01',
-  airDateEnd: '2026-01-21',
+export const singlesInferno4: ShowData = {
+  id: 'singles-inferno-4',
+  nameKo: '솔로지옥4',
+  nameEn: "Single's Inferno 4",
+  network: 'Netflix',
+  episodes: 12,
+  airDateStart: '2025-01-14',
+  airDateEnd: '2025-02-11',
   cast,
   relationships,
   follows,

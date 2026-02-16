@@ -1,33 +1,49 @@
 'use client';
 
 import { useState } from 'react';
-
-const LEGEND_ITEMS = [
-  { label: '팔로우', color: '#64748b', width: 1, dashed: false, arrow: true },
-  { label: '맞팔로우', color: '#94a3b8', width: 2, dashed: false, arrow: false },
-  { label: '전 연인', color: '#f59e0b', width: 1.5, dashed: true, arrow: false },
-  { label: '연애 중', color: '#ef4444', width: 3, dashed: false, arrow: false },
-  { label: '결별', color: '#6b7280', width: 1.5, dashed: true, arrow: false },
-];
+import { useI18n } from '@/lib/i18n';
 
 export default function Legend() {
   const [collapsed, setCollapsed] = useState(false);
+  const { t } = useI18n();
+
+  // Legend items built inside component to access t()
+  const legendItems = [
+    { label: t('legend.oneWayFollow'), color: '#ff6b35', width: 2.5, dashed: false, arrow: true, glow: true },
+    { label: t('legend.mutualFollow'), color: '#94a3b8', width: 2, dashed: false, arrow: false, glow: false },
+    { label: t('legend.exCouple'), color: '#f59e0b', width: 1.5, dashed: true, arrow: false, glow: false },
+    { label: t('legend.dating'), color: '#ef4444', width: 3, dashed: false, arrow: false, glow: false },
+    { label: t('legend.brokenUp'), color: '#6b7280', width: 1.5, dashed: true, arrow: false, glow: false },
+    { label: t('legend.nonFollow'), color: '#ef4444', width: 1.5, dashed: true, arrow: false, glow: false, cross: true },
+  ];
 
   return (
-    <div className="fixed bottom-4 left-4 z-40">
+    <div>
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors mb-1 cursor-pointer"
       >
-        {collapsed ? '범례 ▸' : '범례 ▾'}
+        {collapsed ? `${t('legend.title')} ▸` : `${t('legend.title')} ▾`}
       </button>
 
       {!collapsed && (
         <div className="bg-[var(--surface)]/80 backdrop-blur-sm rounded-lg p-3 border border-[var(--border)]">
           <div className="space-y-2">
-            {LEGEND_ITEMS.map((item) => (
-              <div key={item.label} className="flex items-center gap-2">
+            {legendItems.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
                 <svg width="32" height="12" className="shrink-0">
+                  {/* Glow effect for one-way follow */}
+                  {item.glow && (
+                    <line
+                      x1="2"
+                      y1="6"
+                      x2={item.arrow ? 24 : 30}
+                      y2="6"
+                      stroke={item.color}
+                      strokeWidth={item.width + 3}
+                      strokeOpacity={0.3}
+                    />
+                  )}
                   <line
                     x1="2"
                     y1="6"
@@ -42,6 +58,12 @@ export default function Legend() {
                       points="24,2 30,6 24,10"
                       fill={item.color}
                     />
+                  )}
+                  {(item as { cross?: boolean }).cross && (
+                    <>
+                      <line x1="13" y1="2" x2="19" y2="10" stroke="#ef4444" strokeWidth="2" />
+                      <line x1="19" y1="2" x2="13" y2="10" stroke="#ef4444" strokeWidth="2" />
+                    </>
                   )}
                 </svg>
                 <span className="text-xs text-[var(--foreground)]">
