@@ -382,8 +382,9 @@ export default function ForceGraph({
         const arrowWidth = Math.max(5, 7 / gs);
         drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
 
-        const markX = Math.abs(curvature) > 0.01 ? cpX : midX;
-        const markY = Math.abs(curvature) > 0.01 ? cpY : midY;
+        // Bezier midpoint at t=0.5: B(0.5) = 0.25*P0 + 0.5*CP + 0.25*P1
+        const markX = Math.abs(curvature) > 0.01 ? 0.25 * sx + 0.5 * cpX + 0.25 * tx : midX;
+        const markY = Math.abs(curvature) > 0.01 ? 0.25 * sy + 0.5 * cpY + 0.25 * ty : midY;
         const markSize = Math.max(4, 6 / gs);
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = Math.max(1.5, 2 / gs);
@@ -445,8 +446,8 @@ export default function ForceGraph({
 
       if (isMutualFollow) {
         const themeIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
-        ctx.lineWidth = (themeIsDark ? 0.5 : 1.2) / gs;
-        ctx.globalAlpha = themeIsDark ? 0.08 : 0.45;
+        ctx.lineWidth = (themeIsDark ? 0.8 : 1.2) / gs;
+        ctx.globalAlpha = themeIsDark ? 0.2 : 0.45;
         if (!themeIsDark) ctx.strokeStyle = '#64748b';
       } else {
         ctx.lineWidth = (isOneWayFollow ? l.width * 1.5 : l.width) / gs;

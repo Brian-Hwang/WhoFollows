@@ -29,21 +29,18 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
     const en = (id: string) => castMap.get(id)?.nameEn ?? id;
     const zh = (id: string) => castMap.get(id)?.nameZh ?? castMap.get(id)?.nameEn ?? id;
 
-    const enShort = (id: string) => {
-      const full = castMap.get(id)?.nameEn ?? id;
-      return full.split(' ')[0];
-    };
-    const koShort = (id: string) => ko(id);
-    const zhShort = (id: string) => zh(id);
+    const enFull = en;
+    const koFull = ko;
+    const zhFull = zh;
 
     // 1. One-way follows
     for (const f of follows) {
       if (!followSet.has(`${f.target}->${f.source}`)) {
         result.push({
           emoji: '👀',
-          textKo: `${koShort(f.source)} → ${koShort(f.target)} (맞팔 ✗)`,
-          textEn: `${enShort(f.source)} → ${enShort(f.target)} (not mutual)`,
-          textZh: `${zhShort(f.source)} → ${zhShort(f.target)} (未回关)`,
+          textKo: `${koFull(f.source)} → ${koFull(f.target)} (맞팔 ✗)`,
+          textEn: `${enFull(f.source)} → ${enFull(f.target)} (not mutual)`,
+          textZh: `${zhFull(f.source)} → ${zhFull(f.target)} (未回关)`,
           category: 'follow',
         });
       }
@@ -57,9 +54,9 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
         if (!followSet.has(`${a}->${b}`) && !followSet.has(`${b}->${a}`)) {
           result.push({
             emoji: '🚫',
-            textKo: `${koShort(a)} ✗ ${koShort(b)}`,
-            textEn: `${enShort(a)} ✗ ${enShort(b)}`,
-            textZh: `${zhShort(a)} ✗ ${zhShort(b)}`,
+            textKo: `${koFull(a)} ✗ ${koFull(b)}`,
+            textEn: `${enFull(a)} ✗ ${enFull(b)}`,
+            textZh: `${zhFull(a)} ✗ ${zhFull(b)}`,
             category: 'follow',
           });
         }
@@ -74,9 +71,9 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
         if (aFollowsB && bFollowsA) {
           result.push({
             emoji: '🤝',
-            textKo: `전 연인 ${koShort(rel.source)} ↔ ${koShort(rel.target)} 맞팔 유지`,
-            textEn: `Exes ${enShort(rel.source)} ↔ ${enShort(rel.target)} still mutual`,
-            textZh: `前任 ${zhShort(rel.source)} ↔ ${zhShort(rel.target)} 仍互关`,
+            textKo: `전 연인 ${koFull(rel.source)} ↔ ${koFull(rel.target)} 맞팔 유지`,
+            textEn: `Exes ${enFull(rel.source)} ↔ ${enFull(rel.target)} still mutual`,
+            textZh: `前任 ${zhFull(rel.source)} ↔ ${zhFull(rel.target)} 仍互关`,
             category: 'relationship',
           });
         }
@@ -91,25 +88,25 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
         if (aFollowsB && !bFollowsA) {
           result.push({
             emoji: '💔',
-            textKo: `${koShort(rel.target)} → ${koShort(rel.source)} 언팔`,
-            textEn: `${enShort(rel.target)} unfollowed ex ${enShort(rel.source)}`,
-            textZh: `${zhShort(rel.target)} 取关前任 ${zhShort(rel.source)}`,
+            textKo: `${koFull(rel.target)} → ${koFull(rel.source)} 언팔`,
+            textEn: `${enFull(rel.target)} unfollowed ex ${enFull(rel.source)}`,
+            textZh: `${zhFull(rel.target)} 取关前任 ${zhFull(rel.source)}`,
             category: 'relationship',
           });
         } else if (!aFollowsB && bFollowsA) {
           result.push({
             emoji: '💔',
-            textKo: `${koShort(rel.source)} → ${koShort(rel.target)} 언팔`,
-            textEn: `${enShort(rel.source)} unfollowed ex ${enShort(rel.target)}`,
-            textZh: `${zhShort(rel.source)} 取关前任 ${zhShort(rel.target)}`,
+            textKo: `${koFull(rel.source)} → ${koFull(rel.target)} 언팔`,
+            textEn: `${enFull(rel.source)} unfollowed ex ${enFull(rel.target)}`,
+            textZh: `${zhFull(rel.source)} 取关前任 ${zhFull(rel.target)}`,
             category: 'relationship',
           });
         } else if (!aFollowsB && !bFollowsA) {
           result.push({
             emoji: '💔',
-            textKo: `전 연인 ${koShort(rel.source)} ✗ ${koShort(rel.target)} 서로 언팔`,
-            textEn: `Exes ${enShort(rel.source)} ✗ ${enShort(rel.target)} mutual unfollow`,
-            textZh: `前任 ${zhShort(rel.source)} ✗ ${zhShort(rel.target)} 互相取关`,
+            textKo: `전 연인 ${koFull(rel.source)} ✗ ${koFull(rel.target)} 서로 언팔`,
+            textEn: `Exes ${enFull(rel.source)} ✗ ${enFull(rel.target)} mutual unfollow`,
+            textZh: `前任 ${zhFull(rel.source)} ✗ ${zhFull(rel.target)} 互相取关`,
             category: 'relationship',
           });
         }
@@ -121,9 +118,9 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
       if (rel.type === 'confirmed-couple') {
         result.push({
           emoji: '❤️',
-          textKo: `${koShort(rel.source)} ♥ ${koShort(rel.target)} 연애 중`,
-          textEn: `${enShort(rel.source)} ♥ ${enShort(rel.target)} dating`,
-          textZh: `${zhShort(rel.source)} ♥ ${zhShort(rel.target)} 恋爱中`,
+          textKo: `${koFull(rel.source)} ♥ ${koFull(rel.target)} 연애 중`,
+          textEn: `${enFull(rel.source)} ♥ ${enFull(rel.target)} dating`,
+          textZh: `${zhFull(rel.source)} ♥ ${zhFull(rel.target)} 恋爱中`,
           category: 'relationship',
         });
       }
@@ -134,9 +131,9 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
       if (rel.type === 'not-together') {
         result.push({
           emoji: '😢',
-          textKo: `${koShort(rel.source)} ✗ ${koShort(rel.target)} 결별`,
-          textEn: `${enShort(rel.source)} ✗ ${enShort(rel.target)} broke up`,
-          textZh: `${zhShort(rel.source)} ✗ ${zhShort(rel.target)} 分手`,
+          textKo: `${koFull(rel.source)} ✗ ${koFull(rel.target)} 결별`,
+          textEn: `${enFull(rel.source)} ✗ ${enFull(rel.target)} broke up`,
+          textZh: `${zhFull(rel.source)} ✗ ${zhFull(rel.target)} 分手`,
           category: 'relationship',
         });
       }
@@ -152,9 +149,9 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
     if (mostFollowed) {
       result.push({
         emoji: '👑',
-        textKo: `${koShort(mostFollowed)} — 최다 팔로워 (${maxFollowers})`,
-        textEn: `${enShort(mostFollowed)} — most followers (${maxFollowers})`,
-        textZh: `${zhShort(mostFollowed)} — 最多粉丝 (${maxFollowers})`,
+        textKo: `${koFull(mostFollowed)} — 최다 팔로워 (${maxFollowers})`,
+        textEn: `${enFull(mostFollowed)} — most followers (${maxFollowers})`,
+        textZh: `${zhFull(mostFollowed)} — 最多粉丝 (${maxFollowers})`,
         category: 'follow',
       });
     }
@@ -170,9 +167,9 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
     if (leastFollowing && minFollowing < cast.length - 1) {
       result.push({
         emoji: '🤔',
-        textKo: `${koShort(leastFollowing)} — 최소 팔로잉 (${minFollowing})`,
-        textEn: `${enShort(leastFollowing)} — fewest following (${minFollowing})`,
-        textZh: `${zhShort(leastFollowing)} — 最少关注 (${minFollowing})`,
+        textKo: `${koFull(leastFollowing)} — 최소 팔로잉 (${minFollowing})`,
+        textEn: `${enFull(leastFollowing)} — fewest following (${minFollowing})`,
+        textZh: `${zhFull(leastFollowing)} — 最少关注 (${minFollowing})`,
         category: 'follow',
       });
     }
@@ -183,7 +180,7 @@ export default function InsightsPanel({ showData }: InsightsPanelProps) {
   if (insights.length === 0) return null;
 
   return (
-    <div className="fixed top-16 left-4 z-30 w-[280px] max-h-[calc(100vh-280px)] overflow-y-auto">
+    <div className="fixed top-16 left-4 z-30 w-[320px] max-h-[calc(100vh-160px)] overflow-y-auto">
       <div className="bg-[var(--surface)]/90 backdrop-blur-sm rounded-xl border border-[var(--border)] shadow-xl">
         <div className="px-4 pt-3 pb-2">
           <h3 className="text-base font-bold text-[var(--foreground)] tracking-wide">
