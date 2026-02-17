@@ -94,6 +94,21 @@ export default function ForceGraph({
     defaultPositions.current = map;
   }
 
+  // Set of node IDs connected to the hovered node (for highlight dimming)
+  const hoveredNodeId = hoveredNode?.id ?? null;
+  const hoveredNeighborIds = useMemo(() => {
+    if (!hoveredNodeId) return null;
+    const set = new Set<string>();
+    set.add(hoveredNodeId);
+    graphData.links.forEach((link) => {
+      const srcId = linkNodeId(link.source as string | { id: string });
+      const tgtId = linkNodeId(link.target as string | { id: string });
+      if (srcId === hoveredNodeId) set.add(tgtId);
+      if (tgtId === hoveredNodeId) set.add(srcId);
+    });
+    return set;
+  }, [hoveredNodeId, graphData.links]);
+
   // Build a set of visible link KEYS for paintLink to skip hidden links.
   // We pass ALL links to react-force-graph-2d (so it maintains internal
   // node-object bindings) and hide non-visible ones in the paint callback.
@@ -220,6 +235,23 @@ export default function ForceGraph({
       const n = node as GraphNode & { x: number; y: number };
       const r = NODE_RADIUS;
 
+      const isDimmed = hoveredNeighborIds != null && !hoveredNeighborIds.has(n.id);
+      const isHovered = n.id === hoveredNodeId;
+
+      ctx.save();
+      if (isDimmed) ctx.globalAlpha = 0.15;
+
+      if (isHovered) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r + 8, 0, 2 * Math.PI);
+        ctx.fillStyle = `${n.color}22`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r + 5, 0, 2 * Math.PI);
+        ctx.fillStyle = `${n.color}33`;
+        ctx.fill();
+      }
+
       if (n.id === selectedNodeId) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, r + 5, 0, 2 * Math.PI);
@@ -233,7 +265,7 @@ export default function ForceGraph({
       ctx.beginPath();
       ctx.arc(n.x, n.y, r + 1.5, 0, 2 * Math.PI);
       ctx.strokeStyle = n.color;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = isHovered ? 3.5 : 2.5;
       ctx.stroke();
 
       const img = imageCache.current.get(n.id);
@@ -258,6 +290,8 @@ export default function ForceGraph({
         ctx.fillText(n.initial, n.x, n.y);
       }
 
+      ctx.restore();
+
       if (globalScale > 0.6) {
         const labelSize = 9;
         ctx.font = `500 ${labelSize}px "Noto Sans KR", sans-serif`;
@@ -266,17 +300,20 @@ export default function ForceGraph({
 
         const name = locale === 'zh' ? (n.nameZh ?? n.nameEn) : locale === 'en' ? n.nameEn : n.nameKo;
         const isLight = theme === 'light';
-        // Outline pass — contrasting halo behind text
+
+        ctx.save();
+        if (isDimmed) ctx.globalAlpha = 0.15;
+
         ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)';
         for (const [ox, oy] of [[0.5, 0.5], [-0.5, 0.5], [0.5, -0.5], [-0.5, -0.5], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
           ctx.fillText(name, n.x + ox, n.y + r + labelSize + 2 + oy);
         }
-        // Text pass
         ctx.fillStyle = isLight ? '#1e293b' : 'rgba(226, 232, 240, 0.95)';
         ctx.fillText(name, n.x, n.y + r + labelSize + 2);
+        ctx.restore();
       }
     },
-    [selectedNodeId, locale, theme],
+    [selectedNodeId, hoveredNodeId, hoveredNeighborIds, locale, theme],
   );
 
   const paintLink = useCallback(
@@ -293,6 +330,19 @@ export default function ForceGraph({
       const srcId = linkNodeId(l.source as unknown as string | { id: string });
       const tgtId = linkNodeId(l.target as unknown as string | { id: string });
       if (!visibleLinkSet.has(`${srcId}|${tgtId}|${l.type}`)) return;
+
+      const isLinkDimmed = hoveredNeighborIds != null
+        && !hoveredNeighborIds.has(srcId)
+        && !hoveredNeighborIds.has(tgtId);
+      const isLinkHighlighted = hoveredNodeId != null
+        && (srcId === hoveredNodeId || tgtId === hoveredNodeId);
+
+      if (isLinkDimmed) {
+        ctx.save();
+        ctx.globalAlpha = 0.04;
+      } else if (isLinkHighlighted) {
+        ctx.save();
+      }
 
       const sx = l.source.x;
       const sy = l.source.y;
@@ -464,8 +514,10 @@ export default function ForceGraph({
         ctx.fillStyle = l.color;
         ctx.fillText(l.label, labelX, labelY);
       }
+
+      if (isLinkDimmed || isLinkHighlighted) ctx.restore();
     },
-    [graphData.links, visibleLinkSet],
+    [graphData.links, visibleLinkSet, hoveredNodeId, hoveredNeighborIds],
   );
 
   // Node pointer area for click detection
