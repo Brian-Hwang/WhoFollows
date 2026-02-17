@@ -444,8 +444,10 @@ export default function ForceGraph({
       ctx.strokeStyle = l.color;
 
       if (isMutualFollow) {
-        ctx.lineWidth = 0.5 / gs;
-        ctx.globalAlpha = 0.08;
+        const themeIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
+        ctx.lineWidth = (themeIsDark ? 0.5 : 1.2) / gs;
+        ctx.globalAlpha = themeIsDark ? 0.08 : 0.45;
+        if (!themeIsDark) ctx.strokeStyle = '#64748b';
       } else {
         ctx.lineWidth = (isOneWayFollow ? l.width * 1.5 : l.width) / gs;
       }

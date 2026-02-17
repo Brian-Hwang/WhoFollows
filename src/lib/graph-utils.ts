@@ -285,7 +285,32 @@ export function buildGraphData(show: ShowData): GraphData {
     });
   }
 
-  // Assign curvature to parallel edges between the same node pair
+  // Follow edges curve INSIDE the circle, relationship edges curve OUTSIDE.
+  const nodePositions = new Map<string, { x: number; y: number }>();
+  for (const n of nodes) {
+    if (n.fx != null && n.fy != null) nodePositions.set(n.id, { x: n.fx, y: n.fy });
+  }
+
+  const FOLLOW_TYPES = new Set(['follow', 'mutual-follow', 'non-follow']);
+
+  function outsideCurvatureSign(srcId: string, tgtId: string): number {
+    const sp = nodePositions.get(srcId);
+    const tp = nodePositions.get(tgtId);
+    if (!sp || !tp) return 1;
+
+    const midX = (sp.x + tp.x) / 2;
+    const midY = (sp.y + tp.y) / 2;
+    const dx = tp.x - sp.x;
+    const dy = tp.y - sp.y;
+    const perpX = -dy;
+    const perpY = dx;
+    const cpOutX = midX + perpX;
+    const cpOutY = midY + perpY;
+    const midDist = midX * midX + midY * midY;
+    const cpDist = cpOutX * cpOutX + cpOutY * cpOutY;
+    return cpDist > midDist ? 1 : -1;
+  }
+
   const edgeGroups = new Map<string, number[]>();
   for (let i = 0; i < links.length; i++) {
     const key = makeEdgeKey(links[i].source, links[i].target);
@@ -298,15 +323,37 @@ export function buildGraphData(show: ShowData): GraphData {
   }
 
   for (const indices of edgeGroups.values()) {
-    if (indices.length <= 1) continue;
+    if (indices.length === 1) {
+      const link = links[indices[0]];
+      const isFollow = FOLLOW_TYPES.has(link.type);
+      const outSign = outsideCurvatureSign(link.source, link.target);
+      link.curvature = isFollow ? -outSign * 0.25 : outSign * 0.35;
+      continue;
+    }
 
-    // Spread parallel edges with symmetric curvature around 0
-    const count = indices.length;
-    const spacing = 0.3;
-    const offset = ((count - 1) * spacing) / 2;
+    const followIndices = indices.filter(i => FOLLOW_TYPES.has(links[i].type));
+    const relIndices = indices.filter(i => !FOLLOW_TYPES.has(links[i].type));
+    const outSign = outsideCurvatureSign(links[indices[0]].source, links[indices[0]].target);
 
-    for (let i = 0; i < count; i++) {
-      links[indices[i]].curvature = i * spacing - offset;
+    const insideSign = -outSign;
+    if (followIndices.length === 1) {
+      links[followIndices[0]].curvature = insideSign * 0.25;
+    } else {
+      const spacing = 0.2;
+      const base = 0.2;
+      followIndices.forEach((idx, i) => {
+        links[idx].curvature = insideSign * (base + i * spacing);
+      });
+    }
+
+    if (relIndices.length === 1) {
+      links[relIndices[0]].curvature = outSign * 0.35;
+    } else {
+      const spacing = 0.2;
+      const base = 0.25;
+      relIndices.forEach((idx, i) => {
+        links[idx].curvature = outSign * (base + i * spacing);
+      });
     }
   }
 
