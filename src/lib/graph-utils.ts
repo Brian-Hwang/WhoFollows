@@ -1,13 +1,13 @@
 import { ShowData, GraphData, GraphNode, GraphLink } from './types';
 
 const LINK_STYLES: Record<GraphLink['type'], { color: string; width: number; dashed: boolean }> = {
-  'follow':           { color: '#ff6b35', width: 2.5, dashed: false },
-  'mutual-follow':    { color: '#94a3b8', width: 0.5, dashed: false },
-  'non-follow':       { color: '#ef4444', width: 2,   dashed: true  },
-  'ex-couple':        { color: '#f59e0b', width: 1.5, dashed: true  },
-  'final-couple':     { color: '#ef4444', width: 3,   dashed: false },
-  'confirmed-couple': { color: '#ef4444', width: 3,   dashed: false },
-  'not-together':     { color: '#6b7280', width: 1.5, dashed: true  },
+  'follow':           { color: '#9B8816', width: 2.5, dashed: false },
+  'mutual-follow':    { color: '#8A8890', width: 0.5, dashed: false },
+  'non-follow':       { color: '#14248A', width: 2,   dashed: true  },
+  'ex-couple':        { color: '#9B8816', width: 1.5, dashed: true  },
+  'final-couple':     { color: '#14248A', width: 3,   dashed: false },
+  'confirmed-couple': { color: '#14248A', width: 3,   dashed: false },
+  'not-together':     { color: '#6B6878', width: 1.5, dashed: true  },
 };
 
 export const CIRCLE_RADIUS = 250;

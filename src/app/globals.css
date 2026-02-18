@@ -1,66 +1,166 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root,
-[data-theme="dark"] {
-  --background: #0f172a;
-  --foreground: #e2e8f0;
-  --surface: #1e293b;
-  --surface-hover: #334155;
-  --border: #334155;
-  --accent-pink: #ec4899;
-  --accent-red: #ef4444;
-  --accent-amber: #f59e0b;
-  --accent-blue: #3b82f6;
-  --muted: #94a3b8;
+@custom-variant dark (&:is(.dark *));
+
+/* ===== WhoFollows Design System =====
+ * Palette: #28262C (dark), #F9F5FF (light), #14248A (blue), #9B8816 (gold)
+ */
+
+:root {
+  --radius: 0.625rem;
+
+  /* Dark theme (default) */
+  --background: #28262C;
+  --foreground: #F9F5FF;
+  --card: #302E35;
+  --card-foreground: #F9F5FF;
+  --popover: #302E35;
+  --popover-foreground: #F9F5FF;
+  --primary: #14248A;
+  --primary-foreground: #F9F5FF;
+  --secondary: #3A3840;
+  --secondary-foreground: #F9F5FF;
+  --muted: #3A3840;
+  --muted-foreground: #8A8890;
+  --accent: #9B8816;
+  --accent-foreground: #F9F5FF;
+  --destructive: #14248A;
+  --border: #4A484F;
+  --input: #4A484F;
+  --ring: #14248A;
+  --chart-1: #14248A;
+  --chart-2: #9B8816;
+  --chart-3: #2A3CA0;
+  --chart-4: #C4AD2A;
+  --chart-5: #4A484F;
+  --sidebar: #302E35;
+  --sidebar-foreground: #F9F5FF;
+  --sidebar-primary: #14248A;
+  --sidebar-primary-foreground: #F9F5FF;
+  --sidebar-accent: #3A3840;
+  --sidebar-accent-foreground: #F9F5FF;
+  --sidebar-border: #4A484F;
+  --sidebar-ring: #14248A;
+
+  /* WhoFollows custom vars */
+  --surface: #35333A;
+  --surface-hover: #43414A;
+  --accent-blue: #14248A;
+  --accent-gold: #9B8816;
+  --accent-blue-light: #2A3CA0;
+  --accent-gold-light: #C4AD2A;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --canvas-bg: #0f172a;
-  --canvas-label: #e2e8f0;
+  --canvas-bg: #28262C;
+  --canvas-label: #F9F5FF;
   --canvas-label-shadow: 0px 0px 4px rgba(0, 0, 0, 0.8);
 }
 
-[data-theme="light"] {
-  --background: #f8fafc;
-  --foreground: #1e293b;
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
-  --border: #cbd5e1;
-  --accent-pink: #db2777;
-  --accent-red: #dc2626;
-  --accent-amber: #d97706;
-  --accent-blue: #2563eb;
-  --muted: #64748b;
+[data-theme="light"],
+.light {
+  --background: #F9F5FF;
+  --foreground: #28262C;
+  --card: #EFEBF7;
+  --card-foreground: #28262C;
+  --popover: #EFEBF7;
+  --popover-foreground: #28262C;
+  --primary: #14248A;
+  --primary-foreground: #F9F5FF;
+  --secondary: #E5E0EF;
+  --secondary-foreground: #28262C;
+  --muted: #E5E0EF;
+  --muted-foreground: #6B6878;
+  --accent: #9B8816;
+  --accent-foreground: #28262C;
+  --destructive: #14248A;
+  --border: #C8C3D4;
+  --input: #C8C3D4;
+  --ring: #14248A;
+  --chart-1: #14248A;
+  --chart-2: #9B8816;
+  --chart-3: #2A3CA0;
+  --chart-4: #7A6B10;
+  --chart-5: #C8C3D4;
+  --sidebar: #EFEBF7;
+  --sidebar-foreground: #28262C;
+  --sidebar-primary: #14248A;
+  --sidebar-primary-foreground: #F9F5FF;
+  --sidebar-accent: #E5E0EF;
+  --sidebar-accent-foreground: #28262C;
+  --sidebar-border: #C8C3D4;
+  --sidebar-ring: #14248A;
+
+  /* WhoFollows custom vars */
+  --surface: #EFEBF7;
+  --surface-hover: #E5E0EF;
+  --accent-blue: #14248A;
+  --accent-gold: #9B8816;
+  --accent-blue-light: #2A3CA0;
+  --accent-gold-light: #7A6B10;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05);
-  --canvas-bg: #f1f5f9;
-  --canvas-label: #1e293b;
+  --canvas-bg: #F0ECF8;
+  --canvas-label: #28262C;
   --canvas-label-shadow: none;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
-  --color-border: var(--border);
-  --color-accent-pink: var(--accent-pink);
-  --color-accent-red: var(--accent-red);
-  --color-accent-amber: var(--accent-amber);
   --color-accent-blue: var(--accent-blue);
-  --color-muted: var(--muted);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-blue-light: var(--accent-blue-light);
+  --color-accent-gold-light: var(--accent-gold-light);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-noto-sans-kr);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-noto-sans-kr), sans-serif;
   overflow: hidden;
   margin: 0;
   padding: 0;
 }
 
-/* Scrollbar styling for profile panel */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -75,10 +175,9 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  background: var(--muted-foreground);
 }
 
-/* Pulse animation for confirmed couples */
 @keyframes pulse-glow {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
@@ -86,4 +185,13 @@ body {
 
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

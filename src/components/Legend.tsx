@@ -9,12 +9,12 @@ export default function Legend() {
 
   // Legend items built inside component to access t()
   const legendItems = [
-    { label: t('legend.oneWayFollow'), color: '#ff6b35', width: 2.5, dashed: false, arrow: true, glow: true },
-    { label: t('legend.mutualFollow'), color: '#94a3b8', width: 2, dashed: false, arrow: false, glow: false },
-    { label: t('legend.exCouple'), color: '#f59e0b', width: 1.5, dashed: true, arrow: false, glow: false },
-    { label: t('legend.dating'), color: '#ef4444', width: 3, dashed: false, arrow: false, glow: false },
-    { label: t('legend.brokenUp'), color: '#6b7280', width: 1.5, dashed: true, arrow: false, glow: false },
-    { label: t('legend.nonFollow'), color: '#ef4444', width: 1.5, dashed: true, arrow: false, glow: false, cross: true },
+    { label: t('legend.oneWayFollow'), color: '#9B8816', width: 2.5, dashed: false, arrow: true, glow: true },
+    { label: t('legend.mutualFollow'), color: '#8A8890', width: 2, dashed: false, arrow: false, glow: false },
+    { label: t('legend.exCouple'), color: '#9B8816', width: 1.5, dashed: true, arrow: false, glow: false },
+    { label: t('legend.dating'), color: '#14248A', width: 3, dashed: false, arrow: false, glow: false },
+    { label: t('legend.brokenUp'), color: '#6B6878', width: 1.5, dashed: true, arrow: false, glow: false },
+    { label: t('legend.nonFollow'), color: '#14248A', width: 1.5, dashed: true, arrow: false, glow: false, cross: true },
   ];
 
   return (
@@ -61,8 +61,8 @@ export default function Legend() {
                   )}
                   {(item as { cross?: boolean }).cross && (
                     <>
-                      <line x1="13" y1="2" x2="19" y2="10" stroke="#ef4444" strokeWidth="2" />
-                      <line x1="19" y1="2" x2="13" y2="10" stroke="#ef4444" strokeWidth="2" />
+                      <line x1="13" y1="2" x2="19" y2="10" stroke="#14248A" strokeWidth="2" />
+                      <line x1="19" y1="2" x2="13" y2="10" stroke="#14248A" strokeWidth="2" />
                     </>
                   )}
                 </svg>

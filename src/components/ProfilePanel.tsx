@@ -13,10 +13,10 @@ interface ProfilePanelProps {
 }
 
 const REL_META: Record<Relationship['type'], { key: TranslationKey; color: string }> = {
-  'ex-couple': { key: 'rel.exCouple', color: 'var(--accent-amber)' },
-  'final-couple': { key: 'rel.finalCouple', color: 'var(--accent-pink)' },
-  'confirmed-couple': { key: 'rel.confirmedCouple', color: 'var(--accent-red)' },
-  'not-together': { key: 'rel.notTogether', color: 'var(--muted)' },
+  'ex-couple': { key: 'rel.exCouple', color: 'var(--accent-gold)' },
+  'final-couple': { key: 'rel.finalCouple', color: 'var(--accent-blue)' },
+  'confirmed-couple': { key: 'rel.confirmedCouple', color: 'var(--accent-blue)' },
+  'not-together': { key: 'rel.notTogether', color: 'var(--muted-foreground)' },
 };
 
 export default function ProfilePanel({
@@ -91,7 +91,7 @@ export default function ProfilePanel({
               href={`https://instagram.com/${node.instagram}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 text-sm text-[var(--accent-pink)] hover:underline"
+              className="mt-1 text-sm text-[var(--accent-blue)] hover:underline"
             >
               @{node.instagram}
             </a>

@@ -286,7 +286,7 @@ export default function ForceGraph({
         ctx.font = `500 ${fontSize}px "Noto Sans KR", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#F9F5FF';
         ctx.fillText(n.initial, n.x, n.y);
       }
 
@@ -304,11 +304,11 @@ export default function ForceGraph({
         ctx.save();
         if (isDimmed) ctx.globalAlpha = 0.15;
 
-        ctx.fillStyle = isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(15, 23, 42, 0.85)';
+        ctx.fillStyle = isLight ? 'rgba(240, 236, 248, 0.95)' : 'rgba(40, 38, 44, 0.85)';
         for (const [ox, oy] of [[0.5, 0.5], [-0.5, 0.5], [0.5, -0.5], [-0.5, -0.5], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
           ctx.fillText(name, n.x + ox, n.y + r + labelSize + 2 + oy);
         }
-        ctx.fillStyle = isLight ? '#1e293b' : 'rgba(226, 232, 240, 0.95)';
+        ctx.fillStyle = isLight ? '#28262C' : 'rgba(249, 245, 255, 0.95)';
         ctx.fillText(name, n.x, n.y + r + labelSize + 2);
         ctx.restore();
       }
@@ -386,7 +386,7 @@ export default function ForceGraph({
         const markX = Math.abs(curvature) > 0.01 ? 0.25 * sx + 0.5 * cpX + 0.25 * tx : midX;
         const markY = Math.abs(curvature) > 0.01 ? 0.25 * sy + 0.5 * cpY + 0.25 * ty : midY;
         const markSize = Math.max(4, 6 / gs);
-        ctx.strokeStyle = '#ef4444';
+        ctx.strokeStyle = '#14248A';
         ctx.lineWidth = Math.max(1.5, 2 / gs);
         ctx.globalAlpha = 0.9;
         ctx.beginPath();
@@ -408,7 +408,7 @@ export default function ForceGraph({
         const glowAlpha = 0.12 + 0.18 * Math.sin(phase * Math.PI * 2);
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(255, 107, 53, ${glowAlpha})`;
+        ctx.strokeStyle = `rgba(155, 136, 22, ${glowAlpha})`;
         ctx.lineWidth = (l.width * 4) / gs;
         ctx.setLineDash([]);
         if (Math.abs(curvature) > 0.01) {
@@ -423,7 +423,7 @@ export default function ForceGraph({
 
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255, 200, 150, 0.6)';
+        ctx.strokeStyle = 'rgba(196, 173, 42, 0.6)';
         ctx.lineWidth = (l.width * 0.8) / gs;
         ctx.setLineDash([dashLen, gapLen]);
         ctx.lineDashOffset = -dashOffset;
@@ -448,7 +448,7 @@ export default function ForceGraph({
         const themeIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
         ctx.lineWidth = (themeIsDark ? 0.8 : 1.2) / gs;
         ctx.globalAlpha = themeIsDark ? 0.2 : 0.45;
-        if (!themeIsDark) ctx.strokeStyle = '#64748b';
+        if (!themeIsDark) ctx.strokeStyle = '#6B6878';
       } else {
         ctx.lineWidth = (isOneWayFollow ? l.width * 1.5 : l.width) / gs;
       }
@@ -480,7 +480,7 @@ export default function ForceGraph({
 
           ctx.save();
           ctx.globalAlpha = 0.5;
-          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen + 2, arrowWidth + 1.5, '#ffffff', NODE_RADIUS);
+          drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen + 2, arrowWidth + 1.5, '#F9F5FF', NODE_RADIUS);
           ctx.restore();
           drawArrow(ctx, sx, sy, tx, ty, cpX, cpY, curvature, arrowLen, arrowWidth, l.color, NODE_RADIUS);
         } else if (isMutualFollow) {
@@ -506,7 +506,7 @@ export default function ForceGraph({
         const metrics = ctx.measureText(l.label);
         const pad = 2 / globalScale;
         const themeIsDark = document.documentElement.getAttribute('data-theme') !== 'light';
-        ctx.fillStyle = themeIsDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(248, 250, 252, 0.9)';
+        ctx.fillStyle = themeIsDark ? 'rgba(40, 38, 44, 0.85)' : 'rgba(240, 236, 248, 0.9)';
         ctx.fillRect(
           labelX - metrics.width / 2 - pad,
           labelY - labelSize / 2 - pad,
@@ -583,7 +583,7 @@ export default function ForceGraph({
           graphData={graphData}
           width={width}
           height={height}
-          backgroundColor={theme === 'light' ? '#f1f5f9' : '#0f172a'}
+          backgroundColor={theme === 'light' ? '#F0ECF8' : '#28262C'}
           nodeCanvasObject={paintNode}
           nodeCanvasObjectMode={() => 'replace'}
           nodePointerAreaPaint={paintNodeArea}
